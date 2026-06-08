@@ -1,0 +1,9 @@
+---
+type: showroom
+tabs:
+  - name: OpenShift Console
+    url: '{openshift_cluster_console_url}'
+  - name: Developer Hub
+    url: '{rhdh_url}'
+  - name: GitLab
+    url: '{gitlab_url}'
