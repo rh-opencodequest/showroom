@@ -1,0 +1,88 @@
+= Workshop Overview
+:toc:
+:toc-placement: preamble
+:icons: font
+
+== Your role and mission
+
+You are a developer at **OpenCodeQuest Corp**, a company building cloud-native applications for its clients.
+
+Your team has received an ambitious mission: create a fight simulation system between super heroes and super villains -- with a twist: the outcome of each fight is decided by **Artificial Intelligence**! The application must be resilient, continuously delivered, and the supply chain must be secured end-to-end.
+
+Your manager told you: "We need a modern microservices architecture on OpenShift, with GitOps, secure pipelines and generative AI. And we need to be in production tonight!"
+
+**Your assignment**: Bootstrap, develop and deploy the four microservices of the application using the Red Hat tooling provided in your environment.
+
+**The objective**: Have a complete application running in production on OpenShift, where the Fight service uses an LLM to arbitrate fights.
+
+== The application: Super Heroes vs Super Villains
+
+image::architecture.png[align="center",link=self,window=blank,width=700,title="Application architecture -- Super Heroes vs Super Villains"]
+
+The application is made up of four services:
+
+* **fight-ui** -- React web interface served by a Quarkus microservice. Users pick a hero and a villain and trigger a fight.
+* **hero-service** -- REST CRUD microservice that manages the super hero database (PostgreSQL + Hibernate Panache).
+* **villain-service** -- Same principle as hero-service, but developed with Quarkus' Spring compatibility layer.
+* **fight-service** -- The brain of the application. This service queries the two previous ones, retrieves a random hero and villain, and delegates the fight decision to an LLM hosted on OpenShift AI.
+
+== Success criteria
+
+By the end of this workshop, you will have:
+
+* Bootstrapped each microservice from **Red Hat Developer Hub** templates → **standardized and reproducible setup**
+* Developed the Hero service with Quarkus Dev Mode Live Coding → **instant feedback without restart**
+* Automatically deployed your services to OpenShift via Git commit + ArgoCD → **zero-friction GitOps deployment**
+* Secured your container images with Tekton Chains, SBOM and Enterprise Contract → **integrated supply chain security**
+* Integrated an LLM in the Fight service via Quarkus LangChain4j → **generative AI in production**
+* Promoted your services from dev to preprod and production through an Enterprise Contract pipeline → **secure release management**
+
+== Target audience
+
+This workshop is designed for:
+
+* Java developers who want to discover Quarkus and the OpenShift ecosystem
+* DevOps engineers who want to understand GitOps and Trusted Application Pipelines
+* Anyone interested in integrating AI into cloud-native Java applications
+
+== The challenges ahead
+
+**Challenge 1: Development agility**
+
+Traditional development involves slow build-deploy-test cycles. Quarkus Dev Mode provides Live Coding: your Java changes are reflected instantly without a restart.
+
+**Challenge 2: Deployment consistency**
+
+"It works on my machine" is an anti-pattern. With ArgoCD and Tekton pipelines, every commit triggers an automatic, consistent deployment on OpenShift.
+
+**Challenge 3: Software supply chain security**
+
+Dependency vulnerabilities, unsigned images and unaudited pipelines are major risks. Red Hat Trusted Application Pipelines addresses this with image signing, SBOMs and Enterprise Contract verification.
+
+**Challenge 4: Artificial Intelligence in production**
+
+Integrating an LLM into a Java application is complex. Quarkus LangChain4j makes it as simple as an annotation.
+
+== What the final architecture looks like
+
+If everything goes well, here is what you will have built:
+
+* **4 microservices** deployed in dev, preprod and production on OpenShift
+* **3 PostgreSQL databases** automatically managed by the EDB operator
+* **Tekton pipelines** that sign, analyze and attest every container image
+* **An LLM** hosted on OpenShift AI that generates fight narrations
+* **A GitLab interface** to manage code and releases
+
+== Frequently asked questions
+
+**"Do I need to install anything?"**
+→ No! All development happens in **Red Hat OpenShift Dev Spaces**, an in-browser IDE. You only need a web browser.
+
+**"Do I need to know Java?"**
+→ Basic knowledge is enough. Most of the Java code is provided, and the focus is on cloud-native concepts rather than syntax.
+
+**"How does the LLM work?"**
+→ The Fight Service module explains in detail how Quarkus LangChain4j interacts with the AI model via simple Java annotations.
+
+**"What happens if a pipeline fails?"**
+→ It's expected! The Villain Service module intentionally introduces a vulnerable dependency so you can understand how ACS (Advanced Cluster Security) detects it.

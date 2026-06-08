@@ -1,0 +1,220 @@
+= Module 7: The Villain Microservice
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+Every super hero needs a nemesis. OpenCodeQuest Corp must now create the service that manages super villains. This time, the code is developed with Quarkus' **Spring compatibility layer** -- to show that Quarkus can accommodate Spring code without major modifications.
+
+There is an extra twist: a super villain has sneaked into the code and introduced a **malicious dependency**! You will need to detect and fix the problem using Advanced Cluster Security.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Bootstrap a Quarkus service with Spring Web and Spring Data extensions
+* Understand the difference between native Quarkus and Spring annotations in Quarkus
+* Identify a CVE intentionally introduced in the CI/CD pipeline
+* Fix a vulnerable dependency and redeploy
+
+== Spring compatibility in Quarkus
+
+Quarkus provides Spring compatibility extensions that map Spring annotations to optimized native Quarkus APIs:
+
+* `quarkus-spring-web` -- Spring MVC (`@RestController`, `@GetMapping`, etc.) → RESTEasy
+* `quarkus-spring-data` -- Spring Data JPA (`JpaRepository`) → Hibernate Panache
+* `quarkus-spring-di` -- Spring DI (`@Autowired`) → ArC (CDI)
+
+IMPORTANT: The Spring compatibility extensions **do not load the Spring application context**. They map Spring annotations to CDI/RESTEasy equivalents. Third-party Spring libraries will not work.
+
+== Exercise 1: Bootstrap the Villain service from RHDH
+
+The Villain service code is fully provided -- you do not need to write it. The RHDH template automatically pulls the code from GitHub.
+
+. In RHDH, click **Create** in the left menu.
+
+. Select the template **`OpenCodeQuest - Quarkus microservice with Spring MVC and Spring Data`**:
++
+image::villain-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Villain template with Spring MVC and Spring Data in the RHDH catalog"]
+
+. Select your cluster, check the default parameters and click **Next** until the summary:
++
+image::villain-summary-rhdh.png[align="center",link=self,window=blank,width=600,title="Villain service configuration summary"]
+
+. Click **Create**, then **Open Component in Catalog**.
+
+. On the component page, click **OpenShift Dev Spaces (VS Code)** to open your IDE:
++
+image::villain-home-page-rhdh.png[align="center",link=self,window=blank,width=600,title="villain-service home page in RHDH"]
+
+=== Verify
+
+✓ The `villain-service` component appears in the RHDH catalog
+
+✓ Dev Spaces opens with the villain-service source code
+
+== Exercise 2: Explore the Villain service structure
+
+Unlike the Hero service, Spring annotations are used here.
+
+. Open `src/main/java/io/quarkus/workshop/villain/VillainController.java`. Note the Spring annotations:
++
+[source,java]
+----
+@RestController                          // Spring @RestController (mapped to JAX-RS)
+@RequestMapping("/api/villains")         // Spring @RequestMapping (replaces @Path)
+public class VillainController {
+
+    private final VillainRepository repository;
+
+    public VillainController(VillainRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping                          // Spring @GetMapping (replaces @GET)
+    public List<Villain> getAll() {
+        return repository.findAll();
+    }
+
+    @GetMapping("/random")
+    public Villain getRandom() {
+        return repository.findRandom();
+    }
+
+    @PostMapping
+    @Transactional                       // Standard Jakarta EE
+    public Response create(@Valid Villain villain, @Context UriInfo uriInfo) {
+        repository.save(villain);
+        // ...
+    }
+
+    @PutMapping
+    @Transactional
+    public Villain update(@Valid Villain villain) {
+        return repository.save(villain);
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public void delete(@PathParam("id") Long id) {
+        repository.deleteById(id);
+    }
+}
+----
+
+. Open `VillainRepository.java`. It extends `JpaRepository` (Spring Data):
++
+[source,java]
+----
+public interface VillainRepository extends JpaRepository<Villain, Long> {
+
+    @Query("SELECT v FROM Villain v ORDER BY RAND()")
+    @Transactional
+    Villain findRandom();
+}
+----
++
+NOTE: `JpaRepository` is provided by the `quarkus-spring-data` extension. Quarkus automatically generates an implementation for all standard CRUD methods.
+
+. Verify the application starts correctly in Dev Mode:
++
+[source,bash]
+----
+quarkus dev
+----
+
+. Test the villains endpoint:
++
+[source,bash]
+----
+curl http://localhost:8080/api/villains | head -c 200
+----
+
+=== Verify
+
+✓ The application starts without errors
+
+✓ `curl /api/villains` returns a list of villains
+
+== Exercise 3: Deploy the Villain service
+
+As with the Hero service, deployment is done via a Git commit.
+
+. In Dev Spaces, go to the Source Control view.
+
+. Stage the modified files (`application.properties` already has a pending change).
+
+. Commit with the message: `feat: villain service deployment`
+
+. Push to GitLab (Sync Changes).
+
+. Go back to RHDH on the **CI** tab of the `villain-service` component.
+
+== Exercise 4: Houston, we have a problem!
+
+At this point, you will observe a **pipeline failure**. The `acs-image-check` step fails.
+
+image::acs-check.png[align="center",link=self,window=blank,width=600,title="The acs-image-check step fails -- a security policy is violated"]
+
+A super villain has sneaked into the code and introduced an unauthorized dependency in `pom.xml`!
+
+. Click the failed step to view the logs:
++
+image::acs-image-check-error.png[align="center",link=self,window=blank,width=600,title="Violation details -- a CVE dependency was detected by ACS"]
+
+. The error message indicates which dependency violates the policies.
+
+. In Dev Spaces, open the `pom.xml` file. Thanks to the **Red Hat Dependency Analytics** extension installed in Dev Spaces, the problematic dependency is automatically underlined:
++
+image::devspaces-CVE.png[align="center",link=self,window=blank,width=600,title="Red Hat Dependency Analytics automatically underlines the vulnerable dependency in pom.xml"]
+
+. Remove the problematic dependency from `pom.xml` (it is not used in the code).
+
+=== Verify
+
+After removing the dependency, verify the project still compiles:
+
+[source,bash]
+----
+./mvnw compile -q && echo "Compilation OK"
+----
+
+== Exercise 5: Fix and redeploy
+
+. Commit and push the fix:
++
+[source]
+----
+Commit message: fix: remove vulnerable dependency from pom.xml
+----
+
+. Observe the new pipeline in RHDH -- this time, the `acs-image-check` step should pass.
+
+. Once the pipeline succeeds, tag and create a release to promote to preprod and prod (as in Module 5).
+
+== Stop the Dev Spaces workspace
+
+IMPORTANT: Stop your villain-service Dev Spaces workspace to free cluster resources.
+
+. In Dev Spaces, click **"><"** at the bottom-left, then **Dev Spaces: Stop Workspace**.
+
+image::devspaces-stop2.png[align="center",link=self,window=blank,width=400,title="Stopping the villain-service Dev Spaces workspace"]
+
+== Module summary
+
+**What you accomplished:**
+
+* Bootstrapped the Villain service with Quarkus Spring Web and Spring Data extensions
+* Explored the differences between Spring and native Quarkus annotations
+* Deployed the service and observed a pipeline failure due to a CVE
+* Identified and removed the vulnerable dependency with Red Hat Dependency Analytics
+* Redeployed the service successfully
+
+**Key takeaways:**
+
+* Quarkus enables progressive migration from Spring: teams can keep familiar Spring annotations
+* Shift-left security with ACS detects CVEs **before** code reaches production
+* Red Hat Dependency Analytics integrated in the IDE helps identify vulnerable dependencies during development
+
+**Next step:**
+
+Module 8 creates the **Fight service** -- the brain of the application that integrates an LLM via Quarkus LangChain4j to generate fight narrations.

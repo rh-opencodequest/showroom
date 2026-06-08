@@ -1,0 +1,60 @@
+= Quarkus OpenShift + OpenShift AI Workshop
+
+Welcome to the **Quarkus OpenShift + OpenShift AI** workshop!
+
+In this hands-on lab, you will build a cloud-native application composed of several communicating microservices, deployed on Red Hat OpenShift and enriched with artificial intelligence through OpenShift AI.
+
+== What you'll learn
+
+In this workshop, you will:
+
+* Use **Red Hat Developer Hub** to bootstrap your microservices from ready-to-use templates
+* Develop Java microservices with **Quarkus** inside **Red Hat OpenShift Dev Spaces** (no local installation required)
+* Deploy your services to **Red Hat OpenShift** via secure GitOps pipelines
+* Integrate a **Large Language Model (LLM)** into a Quarkus service using the **Red Hat OpenShift AI** platform
+* Secure your software supply chain with **Red Hat Trusted Application Pipelines**
+
+== The application: Super Heroes vs Super Villains
+
+You will build a fight simulation system between super heroes and super villains made up of four services:
+
+* `fight-ui` -- the web interface that orchestrates the fights
+* `hero-service` -- a REST CRUD microservice managing super heroes (Quarkus + PostgreSQL)
+* `villain-service` -- the counterpart of the hero-service for villains (Quarkus with Spring compatibility)
+* `fight-service` -- an intelligent service that uses an LLM to simulate fights and generate a narration
+
+== Who is this workshop for?
+
+This workshop is designed for **Java and DevOps developers** who want to discover first-hand:
+
+* Cloud-native application development with Quarkus
+* Deployment on OpenShift with GitOps and Tekton
+* AI integration in modern Java applications
+
+Required level: **intermediate** (basic knowledge of Java, REST, Git)
+
+== Prerequisites
+
+Before starting, you only need:
+
+* A recent web browser (Chrome, Firefox, Edge, Safari)
+* Access credentials provided by your instructor (URL + username + password)
+
+NOTE: All development takes place in the browser via Dev Spaces. No local installation required!
+
+== Your lab environment
+
+Your environment is fully provisioned on Red Hat OpenShift. You will have access to:
+
+* Red Hat Developer Hub: {rhdh_url}
+* OpenShift Console: {openshift_console_url}
+* Username: `{user}`
+* Password: `{password}`
+
+== Estimated duration
+
+This workshop takes approximately **2 to 3 hours** depending on your pace.
+
+== Let's get started!
+
+Click on **Workshop Overview** in the navigation to begin your learning journey.

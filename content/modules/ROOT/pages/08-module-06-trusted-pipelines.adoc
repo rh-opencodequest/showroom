@@ -1,0 +1,113 @@
+= Module 6: Red Hat Trusted Application Pipelines
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+In the previous modules, you observed CI/CD pipelines. This module focuses on the **software supply chain security** mechanisms integrated into those pipelines. OpenCodeQuest Corp must guarantee that its container images are trustworthy, unaltered and compliant with corporate security policies.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Understand the role of **Tekton Chains** in image signing and SLSA attestation production
+* Understand what a **SBOM** (Software Bill of Materials) is and why it matters
+* Understand the three verification levels of **Advanced Cluster Security (ACS)**
+* Explain how **Enterprise Contract** validates image provenance during a promotion
+
+== Software supply chain security
+
+Software supply chain security answers the question: **"Where does this code come from, and can we trust it?"**
+
+Classic attack vectors include:
+
+* Compromised dependencies (known CVEs or zero-days)
+* Images built outside the official pipeline (on a laptop)
+* Deployments without compliance validation
+
+**Red Hat Trusted Application Pipelines** addresses these risks systematically in every pipeline.
+
+== Tekton Chains: signing and attestation
+
+**Tekton Chains** is a Kubernetes controller that automatically watches Tekton TaskRuns and:
+
+. **Signs** each built image with a cryptographic key managed by the cluster
+. **Produces an SLSA attestation** (Supply chain Levels for Software Artifacts) in `in-toto` format -- a document certifying where and how the image was built
+. **Stores** the signature (`.sig`) and attestation (`.att`) in the Quay registry alongside the image
+
+image::rhdh-build-sign-image.png[align="center",link=self,window=blank,width=600,title="The build-sign-image step in the pipeline -- Tekton Chains signs the image and produces the SBOM"]
+
+=== The SBOM: your software's ingredient list
+
+A **SBOM (Software Bill of Materials)** is the equivalent of the ingredient list on a food product, but for software. It lists all the dependencies included in a container image.
+
+The SBOM is stored in CycloneDX format in the Quay registry alongside the image. It allows you to:
+
+* Quickly identify whether an image is affected by a newly discovered CVE
+* Prove compliance with security policies
+* Audit the dependency chain of a service
+
+== Advanced Cluster Security (ACS): three verification levels
+
+The pipeline includes **three ACS steps** that use `roxctl` to analyze the image and deployment:
+
+=== acs-image-scan: CVE scan
+
+The CVE scan analyzes the image for known vulnerabilities in OS packages and application dependencies.
+
+image::acs-image-check.png[align="center",link=self,window=blank,width=600,title="ACS CVE scan results -- list of vulnerabilities detected in the image"]
+
+=== acs-image-check: policy verification
+
+Policy verification checks that the image complies with rules defined in ACS. These policies can include:
+
+* Banned packages (e.g. `log4j 2.x`, `curl`, package managers)
+* Approved base image requirements
+* Enforcement of non-root users
+
+image::acs-image-check-error.png[align="center",link=self,window=blank,width=600,title="ACS policy violation -- an unauthorized dependency was detected"]
+
+=== acs-deployment-check: deployment YAML verification
+
+Deployment verification analyzes the `Deployment.yaml` file to detect security misconfigurations:
+
+* Missing `resource requests` and `limits`
+* Containers running in privileged mode
+* Overly permissive `securityContext`
+
+To view the detailed results of each ACS step, click the **View Output** icon in the step actions within RHDH.
+
+== Enterprise Contract: provenance verification
+
+**Enterprise Contract (EC)** is a CLI tool based on the **Rego** policy language (Open Policy Agent). It verifies the cosign attestations produced by Tekton Chains.
+
+During a promotion (tag or release), EC verifies that:
+
+. The image has a valid signature
+. The SLSA attestation is present and valid
+. The image originated from the official CI/CD pipeline (not a local build)
+. The security policies defined by the organization are met
+
+image::promote6.png[align="center",link=self,window=blank,width=600,title="Enterprise Contract in action -- image provenance verification before preprod promotion"]
+
+If Enterprise Contract fails, the promotion is automatically blocked.
+
+Learn more: link:https://enterprisecontract.dev/[enterprisecontract.dev^]
+
+== Module summary
+
+**What you learned:**
+
+* Tekton Chains automatically signs every image and produces an SLSA attestation -- no manual intervention
+* The SBOM is your software's ingredient list, essential for traceability and incident response
+* ACS verifies the image at three levels: CVE, policies, and deployment configuration
+* Enterprise Contract blocks promotions if images do not originate from the official build system
+
+**Key takeaways:**
+
+* The "shift-left security" model integrates security checks into the pipeline rather than running them in production
+* The signature + SLSA attestation answers the question: "Was this image built by our systems?"
+* Enterprise Contract is configurable via custom Rego rules for your business policies
+
+**Next step:**
+
+Module 7 creates the **Villain service** using a different approach: Quarkus' Spring compatibility layer.

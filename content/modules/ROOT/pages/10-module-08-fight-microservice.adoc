@@ -1,0 +1,303 @@
+= Module 8: The Fight Microservice with Generative AI
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+Here is the grand finale! OpenCodeQuest Corp wants the fights to be decided by **Artificial Intelligence** -- not by a simple random calculation. The Fight service will query a **Large Language Model (LLM)** hosted on **Red Hat OpenShift AI** to decide the winner and generate an epic fight narration.
+
+Thanks to **Quarkus LangChain4j**, integrating an LLM into a Java application is as simple as adding a few annotations.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Bootstrap the Fight service from a specialized AI RHDH template
+* Understand the LLM integration architecture with Quarkus LangChain4j
+* Write a `@RegisterAiService` interface with `@SystemMessage` and `@UserMessage` prompts
+* Configure the Fight service to connect to the LLM on OpenShift AI
+* Add fault tolerance with `@Timeout`
+* Observe AI service metrics with Micrometer
+
+== Fight service architecture
+
+The Fight service is the orchestrator service of the application. It:
+
+. Retrieves a random hero from the Hero service
+. Retrieves a random villain from the Villain service
+. Sends both profiles to the LLM with a prompt describing the fight
+. Receives the result (winner + narration) from the LLM
+. Returns the result to the Fight UI interface
+
+image::fight-architecture.png[align="center",link=self,window=blank,width=600,title="Fight service architecture -- the LLM decides the fight outcome and generates the narration"]
+
+== Exercise 1: Bootstrap the Fight service from RHDH
+
+. In RHDH, click **Create** in the left menu.
+
+. Select the template **`OpenCodeQuest - AI-Infused application with Quarkus`**:
++
+image::fight-template-rhdh.png[align="center",link=self,window=blank,width=600,title="AI-Infused Quarkus template in the RHDH catalog"]
+
+. Select your cluster and verify the default parameters:
++
+image::fight-params-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Fight template parameters"]
+
+. Click **Next** until the summary then **Create**:
++
+image::fight-summary-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Fight service configuration summary"]
+
+. Click **Open Component in Catalog**:
++
+image::fight-success-rhdh.png[align="center",link=self,window=blank,width=600,title="Fight service created successfully"]
+
+. On the component page, click **OpenShift Dev Spaces (VS Code)**:
++
+image::fight-home-page-rhdh.png[align="center",link=self,window=blank,width=600,title="fight-service home page in RHDH -- click Dev Spaces to open the IDE"]
+
+=== Verify
+
+✓ The `fight-service` component appears in the RHDH catalog
+
+✓ Dev Spaces opens with the fight-service source code
+
+== Exercise 2: Explore the Fight service structure
+
+The template generates a richer structure than the previous services:
+
+[cols="1,3",options="header"]
+|===
+| File | Description
+| `FightResource.java` | JAX-RS endpoint exposed at `/api/fights`
+| `Fight.java` | Java record encapsulating hero and villain for a fight
+| `Hero.java` / `Villain.java` | Records representing the protagonists
+| `FightResult.java` | Record for the LLM JSON response (winner + narration)
+| `FightSimulatorService.java` | AI Service interface -- **this is where the magic happens**
+| `FightMetricPublisher.java` | Micrometer bean for fight metrics
+| `application.properties` | Configuration including LLM properties
+|===
+
+. Open `FightSimulatorService.java`. It is empty -- you will complete it.
+
+== Exercise 3: Define the AI Service
+
+The Quarkus LangChain4j extension provides a declarative approach to interact with LLMs via the `@RegisterAiService` annotation.
+
+. Open `src/main/java/io/quarkus/workshop/fight/FightSimulatorService.java`.
+
+. Replace the content with the AI Service interface:
++
+[source,java]
+----
+package io.quarkus.workshop.fight;
+
+import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
+import io.quarkiverse.langchain4j.RegisterAiService;
+import io.smallrye.faulttolerance.api.Timeout;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.time.temporal.ChronoUnit;
+
+@RegisterAiService
+@ApplicationScoped
+public interface FightSimulatorService {
+
+    @SystemMessage("""
+        You are a superhero combat simulator.
+        Decide the winner of a fight between a hero and a villain.
+        Respond ONLY with valid JSON matching this structure:
+        {
+            "winner": "hero" or "villain",
+            "narration": "An epic description of the fight in 2-3 sentences."
+        }
+        """)
+    @UserMessage("""
+        <|system|>
+        You are a superhero fight simulator.
+        <|user|>
+        Simulate a fight between:
+        Hero: {hero}
+        Villain: {villain}
+        Who wins and why? Respond in JSON only.
+        <|assistant|>
+        """)
+    @Timeout(value = 1, unit = ChronoUnit.MINUTES)
+    FightResult fight(Hero hero, Villain villain);
+}
+----
++
+NOTE: The `@RegisterAiService` annotation tells Quarkus to automatically generate the implementation that calls the LLM. You only write the interface and prompts -- Quarkus does the rest.
+
+=== How prompts work
+
+* **`@SystemMessage`**: The system context sent to the LLM that defines its role and the expected response format.
+* **`@UserMessage`**: The user request with `{hero}` and `{villain}` parameters -- Quarkus replaces these placeholders with the values passed as method parameters.
+* **`@Timeout`**: If the LLM takes more than 1 minute to respond, the call is cancelled (Fault Tolerance via SmallRye).
+
+The LLM responds with JSON that is automatically deserialized into a `FightResult` by Quarkus.
+
+== Exercise 4: Configure the LLM connection
+
+. Open `src/main/resources/application.properties`.
+
+. Add the LLM connection configuration (values provided by your instructor):
++
+[source,properties]
+----
+# LLM configuration on OpenShift AI
+quarkus.langchain4j.openai.base-url=${AI_URL:https://your-llm-endpoint}
+quarkus.langchain4j.openai.api-key=${AI_KEY:dummy}
+quarkus.langchain4j.openai.chat-model.model-name=${AI_MODEL:granite}
+quarkus.langchain4j.openai.timeout=60s
+quarkus.langchain4j.openai.log-requests=true
+quarkus.langchain4j.openai.log-responses=true
+----
++
+IMPORTANT: Replace `your-llm-endpoint`, `dummy` and `granite` with the values provided by your instructor. These values point to the LLM hosted on OpenShift AI in your cluster.
+
+== Exercise 5: Start and test the Fight service
+
+. Start the Fight service in Dev Mode:
++
+[source,bash]
+----
+quarkus dev
+----
+
+. Verify the service starts:
++
+image::open-quarkus-dev-in-new-tab.png[align="center",link=self,window=blank,width=400,title="Dev Spaces -- click Open in New Tab to access the Fight service Dev UI"]
+
+. Open the Fight service **Dev UI**: `http://localhost:8080/q/dev-ui`
+
+. In a new terminal, test a fight:
++
+[source,bash]
+----
+curl -X POST http://localhost:8080/api/fights \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hero": {
+      "name": "Superman",
+      "level": 10,
+      "powers": "Super strength, flight, laser vision"
+    },
+    "villain": {
+      "name": "Thanos",
+      "level": 9,
+      "powers": "Infinity stones, telepathy"
+    }
+  }'
+----
++
+Expected result (generated by the LLM):
++
+[source,json]
+----
+{
+  "winner": "hero",
+  "narration": "In an epic clash of titans, Superman's raw power overwhelmed Thanos before he could assemble the full power of the Infinity Stones. A single laser vision blast decided the fate of the universe!"
+}
+----
+
+=== Verify
+
+✓ The Fight service starts without errors
+
+✓ The POST request returns a JSON result with `winner` and `narration` generated by the LLM
+
+✓ The narration changes on every call (the LLM generates a different response each time)
+
+== Exercise 6: Observe Micrometer metrics
+
+The Fight service includes custom metrics to track hero and villain victories.
+
+. In the RHDH Topology, click the arrow on the fight service to open its URL.
+
+. Add `/q/metrics` to the URL to view Prometheus metrics:
++
+image::fight-custom-metrics.png[align="center",link=self,window=blank,width=600,title="Fight service Micrometer metrics -- hero and villain win counters"]
+
+. Search for the custom metrics in the output:
++
+[source]
+----
+# HELP fights_total Total number of fights
+# TYPE fights_total counter
+fights_total{won-by="hero"} 3.0
+fights_total{won-by="villain"} 1.0
+----
++
+These counters are defined in `FightMetricPublisher.java` and incremented after each fight.
+
+=== Verify
+
+✓ The `/q/metrics` page is accessible and returns Prometheus-format metrics
+
+✓ The `fights_total` counters are present and increment with each fight
+
+== Exercise 7: Deploy the Fight service and test the complete application
+
+. Commit and push the code:
++
+[source]
+----
+Message: feat: add AI-powered fight simulation with LangChain4j
+----
+
+. Monitor the pipeline in RHDH.
+
+. Once deployed, navigate to the **fight-ui** interface in the dev environment.
+
+. Run a few fights and enjoy the AI-generated narrations!
++
+image::fights.png[align="center",link=self,window=blank,width=600,title="The complete application -- fights with AI-generated narrations in real time"]
+
+. Promote to preprod and production via GitLab tags and releases.
+
+=== Verify
+
+✓ The Fight UI displays fights with AI narrations
+
+✓ All three services (hero, villain, fight) are deployed in all three environments
+
+== Stop the Dev Spaces workspace
+
+. Stop the fight-service Dev Spaces workspace via the **"><"** button → **Dev Spaces: Stop Workspace**.
+
+image::devspaces-stop2.png[align="center",link=self,window=blank,width=400,title="Stopping the fight-service Dev Spaces workspace"]
+
+== Troubleshooting
+
+**Issue**: Fight service returns a timeout error
+
+**Solution**: The LLM may be busy. Wait a few seconds and retry. If the problem persists, verify the LLM URL in `application.properties`.
+
+**Issue**: LLM response is not valid JSON
+
+**Solution**: Adjust the `@SystemMessage` to be more explicit about the expected JSON format. The `@UserMessage` should also guide the LLM toward a structured response.
+
+**Issue**: `ClassCastException` on `FightResult`
+
+**Solution**: Check that `FightResult` is a Java record with `winner` and `narration` fields exactly matching the JSON structure described in the prompt.
+
+== Module summary
+
+**What you accomplished:**
+
+* Bootstrapped the Fight service from the AI-infused RHDH template
+* Created a `@RegisterAiService` interface with `@SystemMessage` and `@UserMessage` prompts
+* Configured the connection to the LLM hosted on OpenShift AI
+* Tested a real fight with an AI-generated narration
+* Observed Micrometer fight metrics
+* Deployed the complete application to production
+
+**Key takeaways:**
+
+* Quarkus LangChain4j reduces LLM integration to an annotated Java interface -- no imperative code required
+* `@RegisterAiService` automatically generates the LLM client with error handling, logging and metrics
+* JSON deserialization from the LLM to a Java object (`FightResult`) is automatic
+* `@Timeout` protects the application against slow or unavailable LLMs
+
+**Congratulations!** You have built a complete microservices application with:
+cloud-native Java, GitOps, supply chain security and generative AI -- all on Red Hat OpenShift!

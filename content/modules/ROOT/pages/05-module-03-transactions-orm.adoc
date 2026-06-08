@@ -1,0 +1,361 @@
+= Module 3: Transactions and ORM with Panache
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+The Hero service now has a minimal REST endpoint. But OpenCodeQuest Corp needs a real super hero database with full CRUD operations. It is time to enrich the service with **Hibernate ORM Panache** -- Quarkus' simplified object-relational mapping.
+
+In this module, you will create a Hero JPA entity, implement CRUD operations and configure PostgreSQL persistence.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Create a JPA entity with Hibernate ORM Panache
+* Implement transactional CRUD operations with JAX-RS
+* Use Quarkus Dev Services for the development database
+* Configure the datasource for production
+* Validate entities with Bean Validation
+
+== The Panache approach
+
+**Hibernate ORM with Panache** focuses on simplicity. Unlike standard JPA, with Panache:
+
+* Your entities extend `PanacheEntity` (no need to manage the ID)
+* Fields are public (no getters/setters boilerplate)
+* Common CRUD operations are provided statically on the entity
+* Custom queries stay in the entity
+
+== Exercise 1: Create the Hero entity
+
+. Make sure you are in the hero-service Dev Spaces workspace (from Module 2).
+
+. Open `src/main/java/io/quarkus/workshop/hero/Hero.java`. This file is present but empty.
+
+. Replace the content with the following Panache entity:
++
+[source,java]
+----
+package io.quarkus.workshop.hero;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.util.Random;
+
+@Entity
+public class Hero extends PanacheEntity {
+
+    @NotNull
+    @Size(min = 3, max = 50)
+    public String name;
+
+    public String otherName;
+
+    @NotNull
+    @Min(1)
+    public int level;
+
+    public String picture;
+
+    @Column(columnDefinition = "TEXT")
+    public String powers;
+
+    public static Hero findRandom() {
+        long countHeroes = count();
+        Random random = new Random();
+        int randomHero = random.nextInt((int) countHeroes);
+        return findAll().page(randomHero, 1).firstResult();
+    }
+}
+----
++
+NOTE: Note the `@Entity` annotation (standard JPA) and the extension of `PanacheEntity` which automatically provides the `id` field and all static CRUD methods (`count()`, `findAll()`, `persist()`, etc.).
+
+. The `findRandom()` method uses Panache pagination to select a random hero from the database.
+
+=== Verify
+
+Thanks to Live Coding, Quarkus recompiles automatically. In the Dev Mode logs, you should see Hibernate recreate the schema:
+
+[source]
+----
+Hibernate: drop table if exists Hero cascade
+Hibernate: create table Hero (id bigint not null, level integer not null, ...)
+----
+
+== Exercise 2: Add CRUD operations to HeroResource
+
+The initial Hero endpoint only handles a simple "hello". You will now add full CRUD operations.
+
+. Open `src/main/java/io/quarkus/workshop/hero/HeroResource.java`.
+
+. Replace the content with the complete CRUD version:
++
+[source,java]
+----
+package io.quarkus.workshop.hero;
+
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.*;
+import java.net.URI;
+import java.util.List;
+
+@Path("/api/heroes")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class HeroResource {
+
+    @GET
+    @Path("/hello")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String hello() {
+        return "Hello from Quarkus REST";
+    }
+
+    @GET
+    public List<Hero> getAll() {
+        return Hero.listAll();
+    }
+
+    @GET
+    @Path("/random")
+    public Hero getRandom() {
+        return Hero.findRandom();
+    }
+
+    @GET
+    @Path("/{id}")
+    public Hero get(@PathParam("id") Long id) {
+        return Hero.findById(id);
+    }
+
+    @POST
+    @Transactional
+    public Response create(@Valid Hero hero, @Context UriInfo uriInfo) {
+        hero.persist();
+        URI uri = uriInfo.getAbsolutePathBuilder()
+            .path(Long.toString(hero.id))
+            .build();
+        return Response.created(uri).entity(hero).build();
+    }
+
+    @PUT
+    @Transactional
+    public Hero update(@Valid Hero hero) {
+        Hero entity = Hero.findById(hero.id);
+        entity.name = hero.name;
+        entity.otherName = hero.otherName;
+        entity.level = hero.level;
+        entity.picture = hero.picture;
+        entity.powers = hero.powers;
+        return entity;
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public void delete(@PathParam("id") Long id) {
+        Hero.deleteById(id);
+    }
+}
+----
++
+IMPORTANT: The `create`, `update` and `delete` methods are annotated `@Transactional`. This means they execute within a JPA transaction: an automatic rollback is performed if an exception occurs.
+
+=== Verify
+
+In a new terminal, test the endpoints:
+
+[source,bash]
+----
+# List all heroes (empty database for now)
+curl http://localhost:8080/api/heroes
+
+# Create a hero
+curl -X POST http://localhost:8080/api/heroes \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Superman","level":10,"powers":"Flight, super strength"}'
+----
+
+== Exercise 3: Load initial data
+
+The database is empty. Load the initial super hero data.
+
+. In a Dev Spaces terminal, run:
++
+[source,bash]
+----
+curl https://raw.githubusercontent.com/cescoffier/quarkus-openshift-workshop/03d5a943c0948bc53c598b6ee78a71e50ef77cee/hero-service/src/main/resources/import.sql \
+  -fL -o src/main/resources/import.sql
+----
+
+. Make sure your `src/main/resources/application.properties` contains the schema recreation configuration:
++
+[source,properties]
+----
+quarkus.hibernate-orm.database.generation=drop-and-create
+----
+
+. Quarkus will reload automatically with the data. Verify:
++
+[source,bash]
+----
+curl http://localhost:8080/api/heroes | head -c 500
+----
+
+You should see a list of ~500 super heroes!
+
+=== Verify
+
+✓ `curl /api/heroes` returns a JSON list of heroes
+
+✓ `curl /api/heroes/random` returns a random hero
+
+== Exercise 4: Add CRUD tests
+
+Quarkus encourages integration tests via `@QuarkusTest` with RestAssured.
+
+. Replace the content of `src/test/java/io/quarkus/workshop/hero/HeroResourceTest.java`:
++
+[source,java]
+----
+package io.quarkus.workshop.hero;
+
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.common.mapper.TypeRef;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import java.util.List;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@QuarkusTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class HeroResourceTest {
+
+    @Test
+    @Order(1)
+    public void testHelloEndpoint() {
+        given()
+          .when().get("/api/heroes/hello")
+          .then()
+            .statusCode(200)
+            .body(is("Hello from Quarkus REST"));
+    }
+
+    @Test
+    @Order(2)
+    public void shouldGetInitialItems() {
+        List<Hero> heroes = given()
+            .when().get("/api/heroes")
+            .then()
+              .statusCode(200)
+              .extract().body().as(new TypeRef<>() {});
+        assertFalse(heroes.isEmpty());
+    }
+
+    @Test
+    @Order(3)
+    public void shouldGetRandomHero() {
+        given()
+            .when().get("/api/heroes/random")
+            .then()
+              .statusCode(200)
+              .body("name", notNullValue());
+    }
+
+    @Test
+    @Order(4)
+    public void shouldNotAddInvalidItem() {
+        Hero hero = new Hero();
+        hero.name = "a"; // too short (min=3)
+        hero.level = 0;  // invalid (min=1)
+
+        given()
+            .body(hero)
+            .header("Content-Type", "application/json")
+            .when().post("/api/heroes")
+            .then()
+              .statusCode(400);
+    }
+}
+----
+
+. In the Dev Mode terminal, press `r` to re-run the tests. They must all pass.
+
+=== Verify
+
+[source]
+----
+All 4 tests are passing (0 skipped)
+----
+
+== Exercise 5: Configure the datasource for production
+
+In development, Dev Services manage the PostgreSQL database automatically. For production on OpenShift, the datasource must be configured explicitly using the `%prod` profile.
+
+. Add the following configuration to `src/main/resources/application.properties`:
++
+[source,properties]
+----
+# Production database configuration (injected by ArgoCD/OpenShift)
+%prod.quarkus.datasource.jdbc.url=jdbc:postgresql://${DB_HOST}/${DB_NAME}
+%prod.quarkus.datasource.username=${DB_USER}
+%prod.quarkus.datasource.password=${DB_PASSWORD}
+%prod.quarkus.hibernate-orm.database.generation=validate
+----
++
+NOTE: The environment variables `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` are automatically injected from OpenShift ConfigMaps and Secrets generated by the pipeline during deployment.
+
+=== Verify
+
+✓ The application restarts without errors (in dev mode, these `%prod` properties are ignored)
+
+✓ Tests continue to pass
+
+== Troubleshooting
+
+**Issue**: Error `table "hero" does not exist` on startup
+
+**Solution**: Check that `quarkus.hibernate-orm.database.generation=drop-and-create` is present in `application.properties`. In Dev Mode, Quarkus must recreate the schema.
+
+**Issue**: `findRandom()` returns `null`
+
+**Solution**: The `import.sql` file may not be loaded. Check the file is present in `src/main/resources/` and restart Dev Mode (`Ctrl+C` then `quarkus dev`).
+
+**Issue**: Compilation error on Jakarta annotations
+
+**Solution**: Verify your imports use `jakarta.*` (not `javax.*`). Quarkus 3.x uses Jakarta EE 10.
+
+== Module summary
+
+**What you accomplished:**
+
+* Created a Hero JPA entity with Hibernate ORM Panache
+* Implemented full CRUD operations (GET, POST, PUT, DELETE)
+* Loaded ~500 heroes from a SQL script
+* Written and validated integration tests with RestAssured
+* Configured the datasource for production environments
+
+**Key takeaways:**
+
+* Panache eliminates JPA boilerplate: entities are simple, readable and CRUD operations are inherited
+* `@Transactional` guarantees atomicity of modification operations
+* Quarkus Dev Services automatically provision PostgreSQL in development -- zero configuration required
+* The `%prod` profile allows different configurations per environment
+
+**Next step:**
+
+Module 4 adds **OpenAPI** documentation and a **Swagger UI** interface to the Hero service.

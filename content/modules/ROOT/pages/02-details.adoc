@@ -1,0 +1,115 @@
+= Workshop Details
+:toc:
+:toc-placement: preamble
+:icons: font
+
+== Duration and schedule
+
+=== Full workshop (3 hours)
+
+* **Module 1** -- Fight UI web interface (15 minutes)
+* **Module 2** -- Hero Microservice: bootstrapping and Dev Mode (30 minutes)
+* **Module 3** -- Transactions and ORM with Panache (30 minutes)
+* **Module 4** -- OpenAPI and Swagger UI (15 minutes)
+* **Module 5** -- Deploying from Git to OpenShift (20 minutes)
+* **Module 6** -- Trusted Application Pipelines (20 minutes)
+* **Module 7** -- Villain Microservice with Spring Compatibility (20 minutes)
+* **Module 8** -- Fight Microservice with Generative AI (30 minutes)
+* **Breaks** -- 20 minutes total
+
+=== Abbreviated workshop (2 hours)
+
+* **Module 1** -- Fight UI (10 minutes)
+* **Module 2** -- Hero Microservice (20 minutes)
+* **Module 3** -- Transactions ORM (20 minutes)
+* **Module 5** -- OpenShift Deployment (15 minutes)
+* **Module 7** -- Villain Microservice (15 minutes)
+* **Module 8** -- Fight Microservice AI (20 minutes)
+
+== Product versions
+
+* Red Hat OpenShift Container Platform: {ocp_version}
+* Red Hat Developer Hub: 1.3+
+* Red Hat OpenShift Dev Spaces: 3.x
+* Red Hat OpenShift AI: 2.x
+* Quarkus: 3.13+
+* Java: 21 (LTS)
+
+== Technical requirements
+
+=== What you need
+
+[cols="1,3",options="header"]
+|===
+| Item | Details
+| Web browser | Chrome, Firefox, Edge or Safari (recent version)
+| Internet access | Required to reach your environment
+| Credentials | Provided by your instructor on a physical card
+|===
+
+=== What is provided in the environment
+
+[cols="1,3",options="header"]
+|===
+| Service | Description
+| Red Hat Developer Hub | Developer portal with pre-configured project templates
+| Red Hat OpenShift Dev Spaces | In-browser IDE based on VS Code with Java 21 + Maven
+| Red Hat OpenShift | Kubernetes enterprise cluster for your deployments
+| GitLab | Source code repository and pipeline trigger
+| PostgreSQL (EDB) | Databases automatically provisioned by pipelines
+| Red Hat OpenShift AI | ML/AI platform hosting the LLM for the Fight service
+| Quay | Container image registry
+| SonarQube | Static code analysis
+| Advanced Cluster Security (ACS) | CVE vulnerability scanner and policy checker
+|===
+
+== Accessing your environment
+
+=== Connecting to Red Hat Developer Hub
+
+. Open your browser and navigate to the URL provided by your instructor: `{rhdh_url}`
+. On the login page, enter your credentials and select **GitLab** as the sign-in mode
+. You will be redirected to the GitLab authentication page
+. Enter your username (`{user}`) and password (`{password}`)
+. You land on the Red Hat Developer Hub home page
+
+=== Your workspace structure
+
+Each participant has an isolated workspace on the OpenShift cluster. Your resources are prefixed with your username `{user}`.
+
+You will have access to:
+
+* A dedicated OpenShift namespace for development (`{user}-dev`)
+* A preprod namespace (`{user}-preprod`)
+* A production namespace (`{user}-prod`)
+* GitLab repositories under your account
+* Dedicated Dev Spaces workspaces per service
+
+== Pre-workshop access checklist
+
+Before starting the modules, verify the following:
+
+* [ ] **RHDH access confirmed** -- Successfully logged in to `{rhdh_url}`
+* [ ] **GitLab credentials working** -- Login with `{user}` / `{password}`
+* [ ] **RHDH home page displayed** -- Page shows available tools
+* [ ] **Stable internet connection** -- No VPN blocking access to services
+
+== Practical tips
+
+TIP: Keep the Red Hat Developer Hub window open in a dedicated tab. You will return to it frequently to access components, CI pipelines and deployment topologies.
+
+IMPORTANT: Each module uses a separate Dev Spaces workspace. To save cluster resources, stop your Dev Spaces workspace at the end of each module using the **"<>"** button at the bottom-left of the IDE.
+
+WARNING: Do not share your credentials with other participants. Each workspace is isolated and resource conflicts could prevent your pipelines from running correctly.
+
+NOTE: If a pipeline fails, don't panic! It is often intentional in this workshop (notably in the Villain module which deliberately introduces a CVE). Error messages are explicit and guide you toward the solution.
+
+== Authors and support
+
+**Authors**: Red Hat OpenCodeQuest Team
+
+**Source repository**: link:https://github.com/cescoffier/quarkus-openshift-workshop[github.com/cescoffier/quarkus-openshift-workshop^]
+
+**Support during the workshop**: Ask your instructor or raise your hand.
+
+**After the workshop**: Join the Quarkus community at link:https://quarkus.io/community/[quarkus.io/community^].

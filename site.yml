@@ -1,0 +1,22 @@
+site:
+  title: Quarkus OpenShift + OpenShift AI Workshop
+  start_page: workshop::index.adoc
+  url: https://rh-opencodequest.github.io/quarkus-openshift-ai-workshop
+
+content:
+  sources:
+    - url: .
+      start_path: content
+
+ui:
+  bundle:
+    url: https://github.com/redhat-scholars/course-ui/releases/latest/download/ui-bundle.zip
+    snapshot: true
+  output_dir: _
+
+output:
+  dir: ./gh-pages
+
+antora:
+  extensions:
+    - require: '@antora/lunr-extension'

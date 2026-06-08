@@ -1,0 +1,16 @@
+name: OpenCodeQuest Workshop
+title: Quarkus OpenShift + OpenShift AI Workshop
+version: master
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+asciidoc:
+  attributes:
+    ocp_version: '4.18'
+    rhdh_url: '{rhdh_url}'
+    openshift_console_url: '{openshift_console_url}'
+    user: '{user}'
+    password: '{password}'
+    gitlab_url: '{gitlab_url}'
+    product_name: Quarkus OpenShift AI Workshop
+    source_repository: https://github.com/cescoffier/quarkus-openshift-workshop

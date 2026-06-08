@@ -1,0 +1,203 @@
+= Module 5: From Git to OpenShift
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+The Hero service is developed and tested locally in Dev Mode. It is time to deploy it to **Red Hat OpenShift**. Good news: with the GitOps configuration set up by the RHDH template, deploying is as simple as a **commit and push** to Git.
+
+OpenCodeQuest Corp adopts the **GitOps** paradigm: the state of the cluster always mirrors the code in Git. ArgoCD watches the repo and automatically synchronizes.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Deploy an application to OpenShift via a simple Git commit
+* Monitor a Tekton CI/CD pipeline from Red Hat Developer Hub
+* Understand the key steps of a secure pipeline (build, sign, SBOM)
+* Visualize a deployment in the OpenShift Topology view
+* Promote an application from dev to preprod via a GitLab tag
+* Promote an application to production via a GitLab release
+
+== Exercise 1: Commit and push the code
+
+With ArgoCD, deploying to OpenShift means committing and pushing your changes to GitLab. The pipeline triggers automatically.
+
+. In Dev Spaces, open the **Source Control** view (branching icon in the left sidebar):
++
+image::ds-source-control-view.png[align="center",link=self,window=blank,width=400,title="Source Control view in Dev Spaces -- stage and commit your changes"]
+
+. Stage all modified files by clicking the **+** next to each file.
+
+. Enter a commit message, for example: `feat: add Hero CRUD with Panache`
+
+. Click **Commit**.
+
+. Click **Sync Changes** (or **Push**) to push to GitLab:
++
+image::git-push-button.png[align="center",link=self,window=blank,width=400,title="Sync Changes button to push code to GitLab"]
+
+. This action automatically triggers a Tekton pipeline on OpenShift.
+
+=== Verify
+
+✓ The commit appears in GitLab (verifiable from the Overview tab of your RHDH component)
+
+== Exercise 2: Monitor the CI/CD pipeline in RHDH
+
+Go back to Red Hat Developer Hub to observe the pipeline in action.
+
+. In RHDH, navigate to the `hero-service` component.
+
+. Click the **CI** tab:
++
+image::rhdh-cicd.png[align="center",link=self,window=blank,width=600,title="CI tab -- Tekton pipeline automatically triggered by the commit"]
+
+. You can see the pipeline running with several steps:
+
+[cols="1,3",options="header"]
+|===
+| Step | Description
+| `git-clone` | Clones the repo from GitLab
+| `mvn-package` | Compiles and packages the Java project
+| `sonarqube-scan` | Static code analysis (quality + security)
+| `build-sign-image` | Builds the container image, signs it with Tekton Chains and generates the SBOM
+| `acs-image-scan` | CVE scan of the image with Advanced Cluster Security
+| `acs-image-check` | ACS policy check (e.g. no curl in production)
+| `acs-deployment-check` | Deployment YAML verification
+| `gitops-update` | Updates the GitOps repo to trigger ArgoCD
+|===
+
+NOTE: The `build-sign-image` step is particularly interesting -- it uses **Tekton Chains** to automatically sign the image and produce an SLSA attestation and an SBOM (Software Bill of Materials).
+
+=== Verify
+
+✓ The pipeline completes all steps successfully
+
+✓ A green icon confirms the success of each step
+
+== Exercise 3: Visualize the deployment in the Topology
+
+Once the pipeline is complete, ArgoCD automatically synchronizes the deployment to OpenShift.
+
+. On the `hero-service` component page in RHDH, click the **Overview** tab to see the ArgoCD sync status.
+
+. Click the **Topology** tab:
++
+image::rhdh-topology-dev.png[align="center",link=self,window=blank,width=600,title="Topology view -- hero-service deployed in dev environment"]
+
+NOTE: Only the `dev` environment is deployed at this stage. `preprod` and `prod` are waiting for a manual promotion.
+
+. Click the **small arrow** next to the dev pod to open the URL of your deployed hero-service.
+
+. You might see a `Resource Not Found` page. That is normal -- add `/api/heroes/hello`, `/api/heroes/random` or `/api/heroes` to the URL to hit the right endpoints.
+
+=== Verify
+
+[source,bash]
+----
+# Replace <HERO_URL> with your hero-service dev URL
+curl <HERO_URL>/api/heroes/random
+----
+
+Expected result: a random hero in JSON
+
+✓ The hero-service pod is in `Running` state in the Topology
+
+✓ The `/api/heroes/random` endpoint responds with a hero
+
+== Exercise 4: Promote to preprod
+
+Promotion to preprod is done via a **Git tag** in GitLab, which triggers a release pipeline that verifies the Enterprise Contract.
+
+. On the `hero-service` component page in RHDH, go to the **Overview** tab and click the link to **GitLab**:
++
+image::promote1.png[align="center",link=self,window=blank,width=600,title="Accessing GitLab from the RHDH Overview tab"]
+
+. In GitLab, click **Tags**:
++
+image::promote2.png[align="center",link=self,window=blank,width=400,title="Navigating to Tags in GitLab"]
+
+. Click **New Tag**:
++
+image::promote3.png[align="center",link=self,window=blank,width=400,title="Create a new release tag"]
+
+. Name the tag **`v1.0`** and click **Create tag**:
++
+image::promote4.png[align="center",link=self,window=blank,width=400,title="Name the tag v1.0 and click Create tag"]
+
+. Go back to RHDH on the **CI** tab to observe the promotion pipeline:
++
+image::promote5.png[align="center",link=self,window=blank,width=600,title="Promotion pipeline to preprod -- Enterprise Contract verification in progress"]
+
+. This pipeline includes a special step: **`verify-enterprise-contract`**. Enterprise Contract verifies that the image was built by the approved build system (not from a laptop), by checking the signature and SLSA attestation generated by Tekton Chains:
++
+image::promote6.png[align="center",link=self,window=blank,width=600,title="Enterprise Contract verification -- image validated as coming from the official build system"]
+
+. Once the pipeline completes, the Topology shows the deployment in preprod:
++
+image::promote7.png[align="center",link=self,window=blank,width=600,title="Hero service deployed to preprod after Enterprise Contract verification"]
+
+=== Verify
+
+✓ The `v1.0` tag appears in GitLab
+
+✓ The promotion pipeline passes the `verify-enterprise-contract` step
+
+✓ The Topology shows the service deployed in preprod
+
+== Exercise 5: Promote to production
+
+Production promotion is done via a **GitLab Release**.
+
+. In GitLab, go to **Create Release**:
++
+image::promote8.png[align="center",link=self,window=blank,width=400,title="Create a release from GitLab"]
+
+. Give the release a title and click **Create release**:
++
+image::promote9.png[align="center",link=self,window=blank,width=400,title="Name the release and confirm creation"]
+
+. A new release pipeline is triggered. If Enterprise Contract passes, the image is promoted to production:
++
+image::promote11.png[align="center",link=self,window=blank,width=600,title="Production deployment confirmed after Enterprise Contract verification"]
+
+=== Verify
+
+✓ The release appears in GitLab
+
+✓ The production pipeline completes successfully
+
+✓ The Topology shows the service deployed in all three environments (dev, preprod, prod)
+
+== Stop the Dev Spaces workspace
+
+Once the Hero service is deployed, the Dev Spaces workspace is no longer needed. Free the cluster resources.
+
+. In Dev Spaces, click the grey **"><"** button at the bottom-left:
++
+image::devspaces-stop1.png[align="center",link=self,window=blank,width=300,title="Button to open Dev Spaces options"]
+
+. Click **Dev Spaces: Stop Workspace**:
++
+image::devspaces-stop2.png[align="center",link=self,window=blank,width=400,title="Stopping the Dev Spaces workspace"]
+
+== Module summary
+
+**What you accomplished:**
+
+* Triggered a complete CI/CD pipeline via a simple Git commit
+* Observed security steps (CVE scan, image signing, SBOM) in a Tekton pipeline
+* Visualized the GitOps deployment in the OpenShift Topology
+* Promoted the Hero service from dev to preprod via a Git tag
+* Promoted to production via a GitLab release with Enterprise Contract verification
+
+**Key takeaways:**
+
+* GitOps: the cluster always mirrors the state of the Git code -- ArgoCD synchronizes automatically
+* Tekton Chains automatically signs images and produces SLSA attestations
+* Enterprise Contract verifies that images come from the approved build system before any promotion
+* Promotion to preprod/prod is intentionally manual (tag/release) -- you decide when to promote
+
+**Next step:**
+
+Module 6 explores **Trusted Application Pipelines** and advanced security mechanisms in detail.

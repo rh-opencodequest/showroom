@@ -1,0 +1,213 @@
+= Module 2: The Hero Microservice
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+OpenCodeQuest Corp needs a service that manages the super hero database. You have been assigned to develop this microservice using **Quarkus** -- the Kubernetes-native Java stack.
+
+In this module, you will bootstrap the project from a Red Hat Developer Hub template, explore the structure of a Quarkus project, and experience **Live Coding in Dev Mode** which lets you see your changes reflected instantly.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Bootstrap a Quarkus microservice from a Red Hat Developer Hub template
+* Start a Quarkus application in Dev Mode inside Dev Spaces
+* Understand the structure of a Quarkus project (JAX-RS Resource, tests)
+* Use the Dev UI to explore Quarkus extensions
+* Run tests in continuous mode with Quarkus
+
+== Exercise 1: Bootstrap the Hero service from RHDH
+
+As with the Fight UI, you will create the component from the template catalog.
+
+. Log in to Red Hat Developer Hub: `{rhdh_url}`
+
+. In the left menu, click **Create**.
++
+image::create-service-rhdh.png[align="center",link=self,window=blank,width=600,title="Create menu in Red Hat Developer Hub"]
+
+. Select the template **`OpenCodeQuest - Quarkus CRUD microservice`**:
++
+image::hero-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Selecting the Hero template from the RHDH catalog"]
+
+. Select your cluster name. The other fields are pre-filled:
++
+image::hero-params-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Hero template parameters"]
+
+. Click **Next** until the summary appears, then click **Create**:
++
+image::hero-summary-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Hero service configuration summary"]
+
+. Once successfully created, click **Open Component in Catalog**:
++
+image::hero-success-rhdh.png[align="center",link=self,window=blank,width=600,title="Hero service created successfully"]
+
+. On the `hero-service` component page, click the **OpenShift Dev Spaces (VS Code)** link to open your development workspace:
++
+image::hero-home-page-rhdh.png[align="center",link=self,window=blank,width=600,title="hero-service home page -- click Dev Spaces to open the IDE"]
+
+. A startup page is displayed while Dev Spaces initializes:
++
+image::dev-spaces-starting-up.png[align="center",link=self,window=blank,width=400,title="Dev Spaces is starting your workspace -- wait for initialization to complete"]
+
+NOTE: Dev Spaces may take 1-2 minutes to start on first use.
+
+=== Verify
+
+✓ The `hero-service` component appears in the RHDH catalog
+
+✓ Dev Spaces opens with the hero-service source code
+
+== Exercise 2: Explore the Quarkus project structure
+
+Once Dev Spaces is open, you have a complete pre-generated Quarkus project.
+
+The project structure includes:
+
+* `pom.xml` -- the Maven descriptor with Quarkus extensions
+* `src/main/java/.../HeroResource.java` -- the JAX-RS endpoint exposed at `/api/heroes`
+* `src/test/java/.../HeroResourceTest.java` -- the integration test
+* `src/main/resources/application.properties` -- application configuration
+* `src/main/resources/import.sql` -- initial data (to be added in the next module)
+
+. Examine `pom.xml` in the file explorer. Note:
+** The Quarkus BOM import (manages dependency versions)
+** The `quarkus-maven-plugin` (packaging and Dev Mode)
+** REST extensions (`quarkus-rest-jackson`)
+
+. Open `HeroResource.java`. The bootstrap generates a minimal endpoint:
++
+[source,java]
+----
+@Path("/api/heroes")
+public class HeroResource {
+
+    @GET
+    @Path("/hello")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String hello() {
+        return "Hello from Quarkus REST";
+    }
+}
+----
+
+== Exercise 3: Start the application in Dev Mode
+
+Quarkus **Dev Mode** is one of its most powerful features: it enables **Live Coding** with hot reload -- your Java changes are applied instantly without restarting the application.
+
+. Open a terminal in Dev Spaces via the hamburger menu (three horizontal lines in the top-left) → **Terminal** → **New Terminal**.
+
+. Start the application in Dev Mode:
++
+[source,bash]
+----
+quarkus dev
+----
++
+Or with Maven:
++
+[source,bash]
+----
+./mvnw quarkus:dev
+----
+
+. Wait for the application to start. You should see in the logs:
++
+[source]
+----
+__  ____  __  _____   ___  __ ____  ______
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/
+...
+hero-service 1.0-SNAPSHOT on JVM (powered by Quarkus 3.13.x) started in Xs.
+----
++
+NOTE: Quarkus Dev Services automatically starts a PostgreSQL database in a container for development. No configuration needed!
+
+. A popup appears to open the Quarkus Dev interface in a new tab:
++
+image::open-quarkus-dev-in-new-tab.png[align="center",link=self,window=blank,width=400,title="Popup to open Quarkus Dev UI in a new tab -- click Open in New Tab"]
++
+Click **Open in New Tab**.
+
+. In a new terminal, verify the endpoint responds:
++
+[source,bash]
+----
+curl http://localhost:8080/api/heroes/hello
+----
++
+Expected result:
++
+----
+Hello from Quarkus REST
+----
+
+=== Verify
+
+✓ The Quarkus application starts without errors
+
+✓ The `curl` command returns `Hello from Quarkus REST`
+
+✓ The Dev Spaces popup appears and lets you open the Dev UI in a new tab
+
+== Exercise 4: Explore the Dev UI
+
+Quarkus ships with a **Developer UI** available only in Dev Mode. It provides a complete view of all loaded extensions and their state.
+
+. Navigate to `http://localhost:8080/q/dev-ui` (or use the link opened from the popup):
++
+image::dev-ui.png[align="center",link=self,window=blank,width=600,title="Quarkus Dev UI -- view of extensions, configuration, tests and development services"]
+
+. The Dev UI lets you:
+** Visualize all loaded Quarkus extensions
+** View and modify configuration on the fly
+** Manage continuous tests
+** See information about Dev Services (auto-provisioned database)
+
+== Exercise 5: Run tests in continuous mode
+
+Quarkus supports **continuous testing**: tests run automatically as soon as code is changed. This provides an ultra-fast feedback cycle.
+
+. In the terminal where Quarkus Dev is running, notice the message at the bottom:
++
+[source]
+----
+Tests paused, press [r] to resume, [h] for more options>
+----
+
+. Press `r` to start the tests.
+
+. Tests run and you should see:
++
+[source]
+----
+All 1 test is passing (0 skipped), 1 test was run in 8053ms.
+----
+
+=== Verify
+
+✓ Tests pass in continuous mode
+
+✓ The Dev UI is accessible and shows loaded extensions
+
+== Module summary
+
+**What you accomplished:**
+
+* Bootstrapped the Hero service from a Red Hat Developer Hub template
+* Started Quarkus in Dev Mode with automatic PostgreSQL provisioning
+* Discovered Quarkus Dev UI and its exploration capabilities
+* Ran tests in continuous mode
+
+**Key takeaways:**
+
+* Quarkus Dev Mode provides Live Coding: no manual rebuild/restart needed to test your changes
+* Dev Services automatically provision dependencies (databases, brokers) in development mode
+* The Dev UI centralizes extension management, configuration and tests
+
+**Next step:**
+
+Module 3 enriches the Hero service with a **JPA entity**, **Hibernate Panache** and full CRUD operations on the PostgreSQL database.

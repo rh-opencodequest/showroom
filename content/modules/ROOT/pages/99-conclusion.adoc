@@ -1,0 +1,178 @@
+= Conclusion and Next Steps
+:toc:
+:toc-placement: preamble
+:icons: font
+
+== Congratulations!
+
+You have completed the **Quarkus OpenShift + OpenShift AI** workshop!
+
+Starting from scratch, you built, secured and deployed a complete microservices application on Red Hat OpenShift, enriched with artificial intelligence.
+
+== What you accomplished
+
+=== Application deployed to production
+
+Your application is now running with:
+
+* **4 microservices** deployed in dev, preprod and production
+* **3 PostgreSQL databases** managed by the EDB operator
+* **1 LLM** integrated via OpenShift AI for fight narrations
+* **GitOps** with ArgoCD for reproducible deployments
+
+=== Skills acquired
+
+[cols="1,2",options="header"]
+|===
+| Skill | Details
+
+| Red Hat Developer Hub
+| Microservice bootstrapping from standardized templates
+
+| Quarkus Dev Mode
+| Live Coding, Dev Services, Dev UI, continuous testing
+
+| Hibernate ORM Panache
+| Simplified JPA entities, transactional CRUD, PostgreSQL Dev Services
+
+| OpenAPI / Swagger UI
+| Automatic API documentation from JAX-RS annotations
+
+| GitOps with ArgoCD
+| Git-commit-triggered deployments, automatic synchronization
+
+| Tekton + Tekton Chains
+| Secure CI/CD pipelines, image signing, SLSA attestations, SBOM
+
+| Advanced Cluster Security
+| CVE scan, policy enforcement, deployment analysis
+
+| Enterprise Contract
+| Image provenance verification during promotions
+
+| Quarkus Spring Compatibility
+| Progressive migration path from Spring to Quarkus
+
+| Quarkus LangChain4j
+| Declarative LLM integration with `@RegisterAiService`
+
+| Micrometer
+| Custom metrics for an AI service
+|===
+
+== The technologies in detail
+
+=== Quarkus
+
+Quarkus is the cloud-native Java stack optimized for Kubernetes and OpenShift. Its advantages:
+
+* **Dev Mode** with hot reload (Live Coding)
+* **Dev Services**: automatic provisioning of dependencies in development
+* **Ultra-fast startup**: seconds instead of minutes
+* **Reduced memory footprint**: ideal for containers
+* **Spring compatible**: progressive migration without full rewrite
+
+Documentation: link:https://quarkus.io/guides/[quarkus.io/guides^]
+
+=== Red Hat Developer Hub
+
+Developer portal based on Backstage that centralizes:
+
+* Pre-configured project templates (scaffolding)
+* Component and API catalog
+* CI/CD and deployment topology visualization
+* Internal technical documentation
+
+Documentation: link:https://developers.redhat.com/rhdh[developers.redhat.com/rhdh^]
+
+=== Red Hat Trusted Application Pipelines
+
+Product suite for software supply chain security:
+
+* **Tekton / OpenShift Pipelines**: cloud-native CI/CD pipelines
+* **Tekton Chains**: automatic image signing and SLSA attestations
+* **Advanced Cluster Security (ACS)**: CVE scan, policies, compliance
+* **Enterprise Contract**: policy-based provenance verification using Rego
+
+Documentation: link:https://www.redhat.com/en/products/trusted-application-pipelines[redhat.com/trusted-application-pipelines^]
+
+=== Red Hat OpenShift AI
+
+MLOps platform integrated with OpenShift for:
+
+* Training and fine-tuning ML/LLM models
+* Model serving (OpenAI-compatible API)
+* Model lifecycle management
+
+Documentation: link:https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai[redhat.com/openshift-ai^]
+
+=== Quarkus LangChain4j
+
+Quarkus extension for LLM integration based on LangChain4j:
+
+* `@RegisterAiService`: automatic LLM client generation
+* `@SystemMessage` / `@UserMessage`: declarative prompts
+* Support for OpenAI, Ollama, Hugging Face, and more
+* Native integration with Micrometer for metrics
+
+Documentation: link:https://docs.quarkiverse.io/quarkus-langchain4j/dev/[docs.quarkiverse.io/quarkus-langchain4j^]
+
+== Next steps
+
+=== Keep learning
+
+* link:https://quarkus.io/guides/[Quarkus Guides^] -- Over 100 guides covering every extension
+* link:https://developers.redhat.com/learn[Red Hat Developer Learning^] -- Guided learning paths
+* link:https://www.redhat.com/en/services/training-and-certification[Red Hat Certifications^] -- EX183 (Quarkus), EX280 (OpenShift)
+
+=== Join the community
+
+* link:https://quarkus.io/community/[Quarkus Community^] -- Forum, Zulip Chat, GitHub
+* link:https://github.com/quarkusio/quarkus[Quarkus GitHub^] -- Contribute to the open source project
+* link:https://developers.redhat.com/[Red Hat Developer^] -- Articles, tutorials, demos
+
+=== Explore your lab environment
+
+Your OpenShift cluster will remain available for the duration of the workshop. Feel free to:
+
+* Explore the OpenShift AI console and the LLM model used
+* Modify the Fight service prompts to change the AI behavior
+* Add new Micrometer metrics
+* Experiment with the Swagger UI of your services
+
+=== Go further with Quarkus
+
+* link:https://code.quarkus.io[code.quarkus.io^] -- Online Quarkus project generator
+* link:https://quarkus.io/guides/quarkus-reactive-architecture[Reactive Architecture^] -- Mutiny, RESTEasy Reactive
+* link:https://quarkus.io/guides/security-overview[Quarkus Security^] -- OIDC, JWT, RBAC
+* link:https://quarkus.io/guides/opentelemetry[Observability^] -- OpenTelemetry, distributed tracing
+
+== References
+
+=== Red Hat Documentation
+
+* link:https://access.redhat.com/documentation/en-us/red_hat_build_of_quarkus[Red Hat Build of Quarkus^]
+* link:https://access.redhat.com/documentation/en-us/red_hat_developer_hub[Red Hat Developer Hub^]
+* link:https://access.redhat.com/documentation/en-us/red_hat_openshift_pipelines[OpenShift Pipelines^]
+* link:https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_security_for_kubernetes[Advanced Cluster Security^]
+* link:https://access.redhat.com/documentation/en-us/red_hat_openshift_ai_self-managed[OpenShift AI^]
+
+=== Workshop source code
+
+* link:https://github.com/cescoffier/quarkus-openshift-workshop[github.com/cescoffier/quarkus-openshift-workshop^] -- Source repository for this workshop
+* link:https://github.com/rh-opencodequest[github.com/rh-opencodequest^] -- Red Hat OpenCodeQuest organization
+
+=== Standards and specifications
+
+* link:https://slsa.dev/[SLSA -- Supply chain Levels for Software Artifacts^]
+* link:https://enterprisecontract.dev/[Enterprise Contract^]
+* link:https://cyclonedx.org/[CycloneDX SBOM Specification^]
+* link:https://docs.sigstore.dev/[Sigstore / cosign^]
+
+== Acknowledgements
+
+Many thanks to the **Red Hat OpenCodeQuest** team for creating and maintaining this workshop.
+
+Thanks to the **Quarkus community** for this fantastic open source framework.
+
+Feel free to share your feedback on this workshop -- your comments help improve the experience for future participants!

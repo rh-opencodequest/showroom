@@ -1,0 +1,17 @@
+* xref:index.adoc[Home]
+* xref:01-overview.adoc[Workshop Overview]
+* xref:02-details.adoc[Workshop Details]
+* Module 1: Fight UI
+** xref:03-module-01-web-application.adoc[The Fight UI Web Application]
+* Module 2: Hero Microservice
+** xref:04-module-02-hero-microservice.adoc[The Hero Microservice]
+** xref:05-module-03-transactions-orm.adoc[Transactions and ORM]
+** xref:06-module-04-openapi.adoc[OpenAPI and Swagger UI]
+* Module 3: Deployment
+** xref:07-module-05-git-to-openshift.adoc[From Git to OpenShift]
+** xref:08-module-06-trusted-pipelines.adoc[Trusted Application Pipelines]
+* Module 4: Villain Microservice
+** xref:09-module-07-villain-microservice.adoc[The Villain Microservice]
+* Module 5: Fight with AI
+** xref:10-module-08-fight-microservice.adoc[The Fight Microservice with AI]
+* xref:99-conclusion.adoc[Conclusion and Next Steps]

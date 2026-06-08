@@ -1,0 +1,112 @@
+= Module 1: The Fight UI Web Application
+:source-highlighter: rouge
+:toc: macro
+:toclevels: 1
+
+The first thing you will do to familiarize yourself with **Red Hat Developer Hub** and **Dev Spaces** is to deploy the web interface of the application.
+
+OpenCodeQuest Corp needs a working front-end before the backend services exist. This is good practice: deploying the UI first validates the deployment environment and gives you something visible in the browser early -- even if the backend services are not yet available.
+
+== Learning objectives
+
+By the end of this module, you will be able to:
+
+* Navigate Red Hat Developer Hub and create a component from a template
+* Understand the role of each service in the Fight UI architecture
+* View the deployment topology in OpenShift from RHDH
+* Access your deployed application in the development environment
+
+== The Fight UI web application
+
+The web interface is written in **JavaScript/React** and its compiled assets are served by a **Quarkus** microservice.
+
+The application performs service composition: it makes HTTP requests to the _heroes_, _villains_ and _fight_ services:
+
+image::architecture.png[align="center",link=self,window=blank,width=600,title="Application architecture -- Fight UI orchestrates calls to the 3 microservices"]
+
+NOTE: In this first module, you will bootstrap the UI. The errors you will see in the interface are expected because the backend microservices are not yet deployed.
+
+== Exercise 1: Bootstrap the Fight UI service from an RHDH template
+
+You will create the `fight-ui` component from the template catalog in Red Hat Developer Hub.
+
+. Log in to Red Hat Developer Hub: `{rhdh_url}`
+
+. In the left menu, click **Create**:
++
+image::create-service-rhdh.png[align="center",link=self,window=blank,width=600,title="Create menu in Red Hat Developer Hub"]
+
+. In the list of available templates, select **`OpenCodeQuest - Fight-UI service`**:
++
+image::ui-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Selecting the Fight-UI template from the RHDH catalog"]
+
+. Select your cluster name (refer to the current URL). The other fields are pre-filled by default:
++
+image::ui-params-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Template parameters -- select your cluster name"]
+
+. Click **Next** until the configuration summary is displayed:
++
+image::ui-summary-template-rhdh.png[align="center",link=self,window=blank,width=600,title="Configuration summary before creation"]
+
+. Review the configuration then click **Create**.
+
+. If everything went well, you see the success page. Click **Open Component in Catalog**:
++
+image::ui-success-rhdh.png[align="center",link=self,window=blank,width=600,title="Successful creation -- click Open Component in Catalog"]
+
+=== Verify
+
+You are now on the `ui-fight` component home page in RHDH:
+
+image::ui-home-page-rhdh.png[align="center",link=self,window=blank,width=600,title="fight-ui component home page in RHDH"]
+
+WARNING: You will see an "Entities not found" warning. This is **expected** because the Hero, Villain and Fight services are not yet deployed. This message will disappear once the entire system is in place.
+
+== Exercise 2: Access the deployed application
+
+Now that the template has created the component and triggered the deployment pipeline, you will verify the deployment and access the application.
+
+. On the `ui-fight` component page, click the **Topology** tab:
++
+image::ui-topology-view.png[align="center",link=self,window=blank,width=600,title="Topology view -- three instances deployed: dev, preprod and production"]
+
+. You can see the three instances of `ui-fight` deployed in the three available environments: **dev**, **preprod** and **prod**.
+
+. Click the **small arrow** (open icon) next to the `dev` instance to open the application URL in a new tab.
+
+. You should see something like:
++
+image::ui-fight-error.png[align="center",link=self,window=blank,width=600,title="Fight UI interface -- errors expected because backend services are not yet deployed"]
+
+. These errors are caused by the absence of backend microservices. Once they are all deployed, you will see:
++
+image::fight-ui.png[align="center",link=self,window=blank,width=600,title="Complete Fight UI interface with heroes, villains and fight results"]
+
+=== Verify
+
+✓ The `ui-fight` component is visible in the RHDH catalog
+
+✓ The Topology tab shows 3 deployed instances (dev, preprod, prod)
+
+✓ The application URL opens in the browser (even if backend error messages are present)
+
+== Module summary
+
+Congratulations! You have deployed the Fight UI web interface via Red Hat Developer Hub.
+
+**What you accomplished:**
+
+* Navigated the Red Hat Developer Hub template catalog
+* Created a component from a pre-configured template
+* Visualized the deployment topology with 3 environments (dev/preprod/prod)
+* Accessed your application deployed on OpenShift
+
+**Key takeaways:**
+
+* Red Hat Developer Hub centralizes the bootstrapping of all your services in a unified portal
+* RHDH templates automate the creation of the Git repo, CI/CD pipeline and ArgoCD configuration
+* The three environments (dev, preprod, prod) are managed by GitOps -- no manual intervention required
+
+**Next step:**
+
+Module 2 takes you to create the first real microservice: the **Hero service** with Quarkus, and discover Live Coding in Dev Mode.
