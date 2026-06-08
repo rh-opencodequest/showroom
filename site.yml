@@ -1,6 +1,6 @@
 site:
   title: Quarkus OpenShift + OpenShift AI Workshop
-  start_page: ROOT:index.adoc
+  start_page: workshop::index.adoc
 
 content:
   sources:

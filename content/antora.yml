@@ -1,4 +1,4 @@
-name: OpenCodeQuest Workshop
+name: workshop
 title: Quarkus OpenShift + OpenShift AI Workshop
 version: master
 start_page: ROOT:index.adoc
