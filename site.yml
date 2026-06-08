@@ -1,7 +1,6 @@
 site:
   title: Quarkus OpenShift + OpenShift AI Workshop
-  start_page: workshop::index.adoc
-  url: https://rh-opencodequest.github.io/quarkus-openshift-ai-workshop
+  start_page: ROOT:index.adoc
 
 content:
   sources:
@@ -16,7 +15,3 @@ ui:
 
 output:
   dir: ./gh-pages
-
-antora:
-  extensions:
-    - require: '@antora/lunr-extension'
